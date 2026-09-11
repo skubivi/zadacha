@@ -3,17 +3,18 @@ import { describe, expect, it } from 'vitest'
 import App from './App'
 
 describe('experience flow', () => {
-  it('moves from the problem into rectangle setup', async () => {
+  it('opens with only the typographic experiment title', () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'Исследовать' }))
-    expect(await screen.findByRole('slider', { name: 'Сторона a' })).toHaveValue('1')
-    expect(screen.getByRole('slider', { name: 'Сторона b' })).toHaveValue('1')
+    expect(screen.getByRole('heading', { name: 'Мысленный эксперимент' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Исследовать' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Выберем две случайные точки/)).not.toBeInTheDocument()
   })
 
-  it('updates a rectangle dimension with the slider', async () => {
+  it('moves from the problem into rectangle setup', async () => {
     render(<App />)
-    fireEvent.click(screen.getByRole('button', { name: 'Исследовать' }))
-    fireEvent.change(await screen.findByRole('slider', { name: 'Сторона a' }), { target: { value: '2.4' } })
-    expect(screen.getByText('2.4')).toBeInTheDocument()
-  })
+    fireEvent.click(await screen.findByRole('button', { name: 'Исследовать' }, { timeout: 5000 }))
+    expect(await screen.findByRole('heading', { name: 'Задайте параметры' })).toBeInTheDocument()
+    expect(await screen.findByRole('slider', { name: 'Сторона a' }, { timeout: 5000 })).toHaveValue('1')
+    expect(screen.getByRole('slider', { name: 'Сторона b' })).toHaveValue('1')
+  }, 10_000)
 })

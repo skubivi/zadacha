@@ -1,0 +1,231 @@
+.clean-shell {
+  min-height: 520px;
+  background: #f3f1ea;
+}
+
+.clean-shell::before,
+.clean-shell .topbar,
+.clean-shell .measure,
+.clean-shell .rectangle::before,
+.clean-shell .floating-label,
+.clean-shell .formula-chip,
+.clean-shell .question-mark {
+  display: none;
+}
+
+.clean-shell .scene {
+  padding: 0;
+}
+
+.type-sequence,
+.setup-sequence {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: clamp(24px, 6vw, 90px);
+}
+
+.type-sequence > h1,
+.setup-sequence > h1,
+.sequence-content > h1 {
+  margin: 0;
+  max-width: 1180px;
+  font-size: clamp(52px, 8vw, 132px);
+  font-weight: 430;
+  line-height: .98;
+  letter-spacing: -.058em;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.sequence-content {
+  display: grid;
+  justify-items: center;
+  gap: clamp(38px, 6vh, 72px);
+}
+
+.sequence-content > h1 {
+  font-size: clamp(38px, 4.4vw, 68px);
+  line-height: 1.04;
+}
+
+.setup-content {
+  width: min(1180px, 92vw);
+  height: min(680px, 84vh);
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) 1fr;
+  align-items: center;
+  gap: clamp(48px, 9vw, 140px);
+}
+
+.setup-content .controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+  margin: 0;
+}
+
+.setup-content .controls .primary-button {
+  margin-top: 16px;
+  justify-self: start;
+}
+
+.setup-content .stage {
+  width: min(54vw, 650px);
+  height: min(68vh, 650px);
+}
+
+.clean-shell .rectangle {
+  border-color: #3d3c39;
+  background: transparent;
+  box-shadow: none;
+}
+
+.featured-stage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  transform-origin: top left;
+}
+
+.featured-stage .stage {
+  width: min(64vw, 760px);
+  height: min(72vh, 680px);
+}
+
+.featured-stage .rectangle {
+  background: transparent;
+}
+
+.clean-shell .connection line {
+  stroke: var(--blue);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.clean-shell .point {
+  width: 15px;
+  height: 15px;
+  border-color: #f3f1ea;
+}
+
+.scene--simulation {
+  overflow: hidden;
+}
+
+.counter-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  padding: 100px clamp(24px, 5vw, 72px) 26px;
+  background: linear-gradient(transparent, rgba(243, 241, 234, .97) 54%);
+  pointer-events: none;
+}
+
+.counter-overlay strong {
+  font-size: clamp(64px, 10vw, 146px);
+  font-weight: 430;
+  line-height: .82;
+  letter-spacing: -.065em;
+}
+
+.counter-overlay > span,
+.counter-overlay p {
+  font: 500 11px 'JetBrains Mono Variable', monospace;
+  color: var(--muted);
+}
+
+.counter-overlay > span {
+  padding-bottom: 8px;
+}
+
+.counter-overlay .progress-track,
+.counter-overlay p {
+  grid-column: 1 / -1;
+}
+
+.counter-overlay .progress-track {
+  margin-top: 26px;
+}
+
+.counter-overlay p {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+
+.counter-overlay p b {
+  color: var(--ink);
+}
+
+.scene--result {
+  padding: 5vh 5vw;
+}
+
+.result-actions {
+  margin-top: 40px;
+}
+
+@media (max-width: 800px) {
+  .type-sequence,
+  .setup-sequence {
+    padding: 22px;
+  }
+
+  .type-sequence > h1,
+  .setup-sequence > h1 {
+    font-size: clamp(46px, 16vw, 72px);
+  }
+
+  .sequence-content > h1 {
+    font-size: clamp(34px, 10vw, 52px);
+  }
+
+  .setup-content {
+    height: 92vh;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(220px, 42vh);
+    gap: 20px;
+  }
+
+  .setup-content .controls {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+
+  .setup-content .controls .primary-button {
+    grid-column: 1 / -1;
+    margin-top: 0;
+  }
+
+  .setup-content .stage,
+  .featured-stage .stage {
+    width: 88vw;
+    height: 42vh;
+  }
+
+  .counter-overlay {
+    padding: 90px 20px 20px;
+  }
+
+  .counter-overlay strong {
+    font-size: 20vw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .type-sequence,
+  .setup-sequence,
+  .featured-stage {
+    transition: none !important;
+  }
+}
