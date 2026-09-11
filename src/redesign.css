@@ -17,6 +17,12 @@
   padding: 0;
 }
 
+.clean-shell .scene--intro,
+.clean-shell .scene--setup {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
 .type-sequence,
 .setup-sequence {
   width: 100%;
@@ -40,6 +46,7 @@
 }
 
 .sequence-content {
+  width: 100%;
   display: grid;
   justify-items: center;
   gap: clamp(38px, 6vh, 72px);

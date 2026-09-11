@@ -1,31 +1,30 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DimensionControl } from './components/DimensionControl'
 import { ExperimentField } from './components/ExperimentField'
 import { PrimaryButton } from './components/PrimaryButton'
 import { RectangleStage } from './components/RectangleStage'
-import { analyticalMean, createPointPair, mulberry32 } from './math/simulation'
+import { analyticalMean } from './math/simulation'
 import { runSimulation, type SimulationProgress } from './simulation/runSimulation'
 
-type Scene = 'intro' | 'setup' | 'experiment' | 'simulation' | 'result'
+type Scene = 'intro' | 'setup' | 'experiment' | 'result'
 type IntroPhase = 'title' | 'question' | 'action'
 type SetupPhase = 'title' | 'controls'
-type ExperimentPhase = 'points' | 'line' | 'shrink'
 const TOTAL = 1_000_000
 const ease = [0.16, 1, 0.3, 1] as const
+const clamp01 = (value: number) => Math.max(0, Math.min(1, value))
 
 export default function App() {
   const [scene, setScene] = useState<Scene>('intro')
   const [introPhase, setIntroPhase] = useState<IntroPhase>('title')
   const [setupPhase, setSetupPhase] = useState<SetupPhase>('title')
-  const [experimentPhase, setExperimentPhase] = useState<ExperimentPhase>('points')
   const [a, setA] = useState(1), [b, setB] = useState(1)
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 32))
   const [progress, setProgress] = useState<SimulationProgress>({ completed: 0, total: TOTAL, mean: 0 })
-  const [visualPercent, setVisualPercent] = useState(0)
+  const [animationProgress, setAnimationProgress] = useState(0)
+  const [animationDone, setAnimationDone] = useState(false)
   const [error, setError] = useState('')
   const reduced = useReducedMotion()
-  const pair = useMemo(() => createPointPair(a, b, mulberry32(seed)), [a, b, seed])
 
   useEffect(() => {
     if (scene !== 'intro') return
@@ -43,45 +42,41 @@ export default function App() {
 
   useEffect(() => {
     if (scene !== 'experiment') return
-    setExperimentPhase('points')
-    const line = setTimeout(() => setExperimentPhase('line'), reduced ? 80 : 1000)
-    const shrink = setTimeout(() => setExperimentPhase('shrink'), reduced ? 160 : 3400)
-    const simulation = setTimeout(() => setScene('simulation'), reduced ? 240 : 5000)
-    return () => { clearTimeout(line); clearTimeout(shrink); clearTimeout(simulation) }
-  }, [scene, seed, reduced])
-
-  useEffect(() => {
-    if (scene !== 'simulation') return
     setError(''); setProgress({ completed: 0, total: TOTAL, mean: 0 })
-    const startedAt = performance.now()
     const run = runSimulation({ a, b, seed, total: TOTAL, onProgress: setProgress })
     run.promise.then((value) => {
       setProgress(value)
-      const remaining = reduced ? 100 : Math.max(0, 8000 - (performance.now() - startedAt))
-      setTimeout(() => setScene('result'), remaining)
     }).catch((reason) => { if (reason.message !== 'Simulation cancelled') setError('Расчёт прервался. Попробуем ещё раз?') })
     return run.cancel
   }, [scene, a, b, seed, reduced])
 
   useEffect(() => {
-    if (scene !== 'simulation') { setVisualPercent(0); return }
-    if (reduced) { setVisualPercent(1); return }
+    if (scene !== 'experiment') { setAnimationProgress(0); return }
+    setAnimationDone(false)
+    if (reduced) { setAnimationProgress(1); setAnimationDone(true); return }
     const startedAt = performance.now()
     let frame = 0
     const animate = (now: number) => {
-      setVisualPercent(Math.min(1, (now - startedAt) / 7600))
-      if (now - startedAt < 7600) frame = requestAnimationFrame(animate)
+      const next = Math.min(1, (now - startedAt) / 13_000)
+      setAnimationProgress(next)
+      if (next < 1) frame = requestAnimationFrame(animate)
+      else setAnimationDone(true)
     }
     frame = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(frame)
   }, [scene, reduced])
 
-  const begin = () => { setSeed(Math.floor(Math.random() * 2 ** 32)); setScene('experiment') }
+  useEffect(() => {
+    if (scene === 'experiment' && animationDone && progress.completed === TOTAL) setScene('result')
+  }, [scene, animationDone, progress.completed])
+
+  const begin = () => { setSeed(Math.floor(Math.random() * 2 ** 32)); setAnimationDone(false); setScene('experiment') }
   const replay = () => begin()
   const reset = () => setScene('setup')
   const exact = analyticalMean(a, b)
-  const percent = Math.min(progress.completed / TOTAL, visualPercent)
-  const displayedCompleted = Math.min(progress.completed, Math.floor(TOTAL * visualPercent))
+  const fillPercent = clamp01((animationProgress - .38) / .62)
+  const percent = Math.min(progress.completed / TOTAL, fillPercent)
+  const displayedCompleted = Math.min(progress.completed, Math.floor(TOTAL * fillPercent))
 
   return <main className="app-shell clean-shell">
     <AnimatePresence mode="wait">
@@ -106,13 +101,9 @@ export default function App() {
           </AnimatePresence>
         </div>}
 
-        {scene === 'experiment' && <motion.div className="featured-stage" animate={experimentPhase === 'shrink' ? { scale: .16, x: '-2vw', y: '-2vh' } : { scale: 1, x: 0, y: 0 }} transition={{ duration: 1.5, ease }}>
-          <RectangleStage a={a} b={b} pair={pair} lineVisible={experimentPhase !== 'points'}/>
-        </motion.div>}
-
-        {scene === 'simulation' && <>
-          <ExperimentField a={a} b={b} seed={seed} progress={percent}/>
-          <div className="counter-overlay"><strong>{displayedCompleted.toLocaleString('ru-RU')}</strong><span>/ {TOTAL.toLocaleString('ru-RU')}</span><div className="progress-track"><i style={{ transform: `scaleX(${percent})` }}/></div><p>Среднее <b>{progress.mean ? progress.mean.toFixed(6) : '—'}</b></p>{error && <button onClick={replay}>{error}</button>}</div>
+        {scene === 'experiment' && <>
+          <ExperimentField a={a} b={b} seed={seed} progress={animationProgress}/>
+          {fillPercent > 0 && <div className="counter-overlay"><strong>{displayedCompleted.toLocaleString('ru-RU')}</strong><span>/ {TOTAL.toLocaleString('ru-RU')}</span><div className="progress-track"><i style={{ transform: `scaleX(${percent})` }}/></div><p>Среднее <b>{progress.mean ? progress.mean.toFixed(6) : '—'}</b></p>{error && <button onClick={replay}>{error}</button>}</div>}
           <span className="sr-only" aria-live="polite">Обработано {Math.floor(displayedCompleted / 100000) * 100000} испытаний</span>
         </>}
 
